@@ -97,17 +97,21 @@ module Wowlog
     }
 
     def initialize
+      @flag_cache = {}
     end
 
     def parse_unit_flag(val)
       f = val.hex
       return [] if f == 0
+      return @flag_cache[f] unless @flag_cache[f].nil?
 
       res = []
       UNIT_FLAG_MAP.each { |k, v| res.push(v) if (f & k) > 0 }
       if (f & OBJECT_SPECIAL_MASK) > 0
         UNIT_SPECIAL_FLAG_MAP.each { |k, v| res.push(v) if (f & k) > 0 }
       end
+
+      @flag_cache[f] = res
       return res
     end
 
