@@ -28,58 +28,62 @@ require "wowlog/version"
 require 'csv'
 require 'pp'
 
+$unit_stat = Hash.new { |h,k| h[k] = 0 }
+$unit_none = 0
+
+
 module Wowlog
 
+  #
+  # ---------------------------------------------------------
   # Basic class for all column parser
+  # ---------------------------------------------------------
+  #
+
   class ColumnParser 
-    def parse_unit_flag(val)
-      flag_map = {
-        0x00004000 => 'TYPE_OBJECT',
-        0x00002000 => 'TYPE_GUARDIAN',
-        0x00001000 => 'TYPE_PET',
-        0x00000800 => 'TYPE_NPC',
-        0x00000400 => 'TYPE_PLAYER',
-        0x00000200 => 'CONTROL_NPC',
-        0x00000100 => 'CONTROL_PLAYER',
-        0x00000040 => 'REACTION_HOSTILE',
-        0x00000020 => 'REACTION_NEUTRAL',
-        0x00000010 => 'REACTION_FRIENDLY',
-        0x00000008 => 'AFFILIATION_OUTSIDER',
-        0x00000004 => 'AFFILIATION_RAID',
-        0x00000002 => 'AFFILIATION_PARTY',
-        0x00000001 => 'AFFILIATION_MINE',
-        0x08000000 => 'RAIDTARGET8',
-        0x04000000 => 'RAIDTARGET7',
-        0x02000000 => 'RAIDTARGET6',
-        0x01000000 => 'RAIDTARGET5',
-        0x00800000 => 'RAIDTARGET4',
-        0x00400000 => 'RAIDTARGET3',
-        0x00200000 => 'RAIDTARGET2',
-        0x00100000 => 'RAIDTARGET1',
-        0x00080000 => 'MAINASSIST',
-        0x00040000 => 'MAINTANK',
-        0x00020000 => 'FOCUS',
-        0x00010000 => 'TARGET',
-      }
+    UNIT_FLAG_MAP = {
+      0x00000001 => 'AFFILIATION_MINE',
+      0x00000002 => 'AFFILIATION_PARTY',
+      0x00000004 => 'AFFILIATION_RAID',
+      0x00000008 => 'AFFILIATION_OUTSIDER',
+      0x00000010 => 'REACTION_FRIENDLY',
+      0x00000020 => 'REACTION_NEUTRAL',
+      0x00000040 => 'REACTION_HOSTILE',
+      0x00000100 => 'CONTROL_PLAYER',
+      0x00000200 => 'CONTROL_NPC',
+      0x00000400 => 'TYPE_PLAYER',
+      0x00000800 => 'TYPE_NPC',
+      0x00001000 => 'TYPE_PET',
+      0x00002000 => 'TYPE_GUARDIAN',
+      0x00004000 => 'TYPE_OBJECT',
+    }
 
-      res = flag_map.select { |k, v| (val.hex & k) > 0 }
-      return res.values
-    end
+    OBJECT_SPECIAL_MASK = 0xFFFF0000
+    UNIT_SPECIAL_FLAG_MAP = {
+      0x00010000 => 'TARGET',
+      0x00020000 => 'FOCUS',
+      0x00040000 => 'MAINTANK',
+      0x00080000 => 'MAINASSIST',
+      0x00100000 => 'RAIDTARGET1',
+      0x00200000 => 'RAIDTARGET2',
+      0x00400000 => 'RAIDTARGET3',
+      0x00800000 => 'RAIDTARGET4',
+      0x01000000 => 'RAIDTARGET5',
+      0x02000000 => 'RAIDTARGET6',
+      0x04000000 => 'RAIDTARGET7',
+      0x08000000 => 'RAIDTARGET8',
+      0x80000000 => 'NONE',
+    }
 
-    def parse_school_flag(val)
-      school_map = {
-        0x1 => 'Physical',
-        0x2 => 'Holy',
-        0x4 => 'Fire',
-        0x8 => 'Nature',
-        0x10 => 'Frost',
-        0x20 => 'Shadow',
-        0x40 => 'Arcane',
-      }
-
-      res = school_map.select { |k, v| (val.hex & k) > 0 }
-      return res.values
-    end
+    SCHOOL_FLAG_MAP = {
+      0x1 => 'Physical',
+      0x2 => 'Holy',
+      0x4 => 'Fire',
+      0x8 => 'Nature',
+      0x10 => 'Frost',
+      0x20 => 'Shadow',
+      0x40 => 'Arcane',
+    }
 
     PT_MAP = {
       -2 => 'health',
@@ -91,6 +95,28 @@ module Wowlog
       5 => 'runes',
       6 => 'runic power'
     }
+
+    def initialize
+    end
+
+    def parse_unit_flag(val)
+      f = val.hex
+      return [] if f == 0
+
+      res = []
+      UNIT_FLAG_MAP.each { |k, v| res.push(v) if (f & k) > 0 }
+      if (f & OBJECT_SPECIAL_MASK) > 0
+        UNIT_SPECIAL_FLAG_MAP.each { |k, v| res.push(v) if (f & k) > 0 }
+      end
+      return res
+    end
+
+    def parse_school_flag(val)
+      f = val.hex
+      res = SCHOOL_FLAG_MAP.select { |k, v| (f & k) > 0 }
+      return res.values
+    end
+
     def resolv_power_type(pt); return PT_MAP[pt]; end
 
 
@@ -409,13 +435,7 @@ module Wowlog
         cols, obj = psr.parse(cols, obj)
       end
 
-      if cols.size > 0 and ev_orig != 'SPELL_CAST_SUCCESS'
-        puts
-        p psr_seq
-        puts orig_txt
-        p cols
-        pp obj
-      end
+      return obj
     end
 
     def parse_line(line)
@@ -434,6 +454,28 @@ module Wowlog
 
       # parse CSV part
       obj = parse_cols(cols)
+      obj['timestamp'] = ts
+      return obj
     end
   end
+
+  #
+  # ---------------------------------------------------------
+  # Utilities
+  # ---------------------------------------------------------
+  #
+
+  SCHOOL_COLOR = {
+    "Physical" => "#FFFF00",
+    "Holy" => "#FFE680",
+    "Fire" => "#FF8000",
+    "Nature" => "#4DFF4D",
+    "Frost" => "#80FFFF",
+    "Shadow" => "#8080FF",
+    "Arcane" => "#FF80FF",
+  }
+  def resolv_school_color(school)
+    return SCHOOL_COLOR[school]
+  end
+
 end

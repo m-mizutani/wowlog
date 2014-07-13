@@ -28,11 +28,17 @@
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), *%w[.. lib])
 require 'wowlog'
+require 'pp'
 
 psr = Wowlog::Parser.new
+
 File.open(ARGV[0], 'r') { |fd|
   fd.each { |line|
-    psr.parse_line(line)
+    ev = psr.parse_line(line)
+    begin
+      pp ev
+    rescue => e
+      # ignore
+    end
   }
 }
-  
