@@ -26,7 +26,7 @@
 
 require "wowlog/version"
 require 'csv'
-require 'pp'
+require 'time'
 
 $unit_stat = Hash.new { |h,k| h[k] = 0 }
 $unit_none = 0
