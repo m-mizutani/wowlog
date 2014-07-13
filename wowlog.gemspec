@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["muret@haeena.net"]
   spec.summary       = %q{World of Warcraft Combat Log Parser}
   spec.description   = %q{Wowlog is Parser Library for World of Warcraft Combat Log to analyze your combat.}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/m-mizutani/wowlog"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
@@ -19,5 +19,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_development_dependency "bundler", "~> 1.6"
-  spec.add_development_dependency "rake"
+  spec.add_development_dependency 'rake', '~> 0'
 end
