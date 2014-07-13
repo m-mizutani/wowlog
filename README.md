@@ -1,6 +1,6 @@
 # Wowlog
 
-TODO: Write a gem description
+Wowlog is Parser Library for World of Warcraft Combat Log to analyze your combat.
 
 ## Installation
 
@@ -18,7 +18,17 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+    require 'wowlog'
+    psr = Wowlog::Parser.new
+    File.open('/path/to/WowCombatLog.txt', 'r') do |fd|
+      fd.each do |line|
+        ev = psr.parse_line(line)
+        puts ev
+        # => {"event"=>"SPELL_HEAL", "sourceGUID"=>"0x0300000007F97AFF", "sourceName"=>"Muret", ...}
+      end
+    end
+
+
 
 ## Contributing
 
