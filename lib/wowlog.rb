@@ -379,9 +379,9 @@ module Wowlog
         'DAMAGE_SHIELD_MISSED' => [SpellParser.new, MissParser.new],
         'ENCHANT_APPLIED' => [EnchantParser.new],
         'ENCHANT_REMOVED' => [EnchantParser.new],
-        'PARTY_KILL' => [VoidParser.new],
-        'UNIT_DIED' => [VoidParser.new],
-        'UNIT_DESTROYED' => [VoidParser.new],
+        'PARTY_KILL' => [EventParser.new],
+        'UNIT_DIED' => [EventParser.new],
+        'UNIT_DESTROYED' => [EventParser.new],
         'ENCOUNTER_START' => [EncountParser.new],
         'ENCOUNTER_END' => [EncountParser.new],
       }
