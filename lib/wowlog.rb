@@ -342,7 +342,7 @@ module Wowlog
   end
 
 
-  class EncountParser < ColumnParser
+  class EncountParser < EventParser
     def parse(cols, obj)
       cols, obj = super(cols, obj)
       obj['encounterID'] = cols[0]
