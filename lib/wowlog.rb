@@ -135,10 +135,6 @@ module Wowlog
     end
   end
   
-  class EncountEvent < EventParser
-    def parse(cols, obj); end
-  end
-
   class ActionEvent < EventParser
     def parse(cols, obj)
       cols, obj = super(cols, obj)
@@ -343,11 +339,29 @@ module Wowlog
 
 
   class EncountParser < EventParser
+    DIFFICULTY = {
+      1 => "Normal",
+      2 => "Heroic",
+      3 => "10 Player",
+      4 => "25 Player",
+      5 => "10 Player (Heroic)",
+      6 => "25 Player (Heroic)",
+      7 => "Looking For Raid",
+      8 => "Challenge Mode",
+      9 => "40 Player",
+      10 => nil,
+      11 => "Heroic Scenario",
+      12 => "Normal Scenario",
+      13 => nil,
+      14 => "Flexible",
+    }
     def parse(cols, obj)
       cols, obj = super(cols, obj)
       obj['encounterID'] = cols[0]
       obj['encounterName'] = cols[1]
-      obj['difficultyID'] = cols[2]
+      d_id = cols[2].to_i
+      obj['difficultyID'] = d_id
+      obj['difficulty'] = DIFFICULTY[d_id]
       obj['groupSize'] = cols[3]
       cols.shift(4)
       

@@ -40,7 +40,8 @@ File.open(ARGV[0], 'r') { |fd|
 
     if ev['event'] == 'ENCOUNTER_START'
       enc_name = ev['encounterName'].gsub(/\s/, '_')
-      fname = "WowCombatLog_#{ev['timestamp']}_#{enc_name}_#{ev['groupSize']}man.txt"
+      ts = ev['timestamp'].to_i
+      fname = "WowCombatLog_#{ts}_#{enc_name}_#{ev['groupSize']}man.txt"
       out_fd = File.open(fname, "w")
       puts "Open: #{fname}"
     end
