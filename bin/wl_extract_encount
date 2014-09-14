@@ -30,6 +30,7 @@ require 'wowlog'
 require 'pp'
 require 'time'
 require 'optparse'
+require 'msgpack'
 
 out_encode = false
 out_dir = './'
@@ -49,29 +50,38 @@ argv.each do |log_file|
     base_ts = nil
 
     fd.each { |line|
-      if !(out_fd.nil?)
-        out_fd.write(line)
-      end
-
       ev = psr.parse_line(line)
 
       if ev['event'] == 'ENCOUNTER_START'
+        # Set counting paramters.
         ev_count = 0
         base_ts = ev['timestamp']
 
+        # Covert timestamp to YYYYMMDD_HHMMSS format.
         enc_name = ev['encounterName'].gsub(/\s/, '_')
         dt = Time.at(ev['timestamp']).to_s.split(/\s/)
         dt_s = [dt[0].split('-').join(''), dt[1].split(':').join('')].join('_')
 
-        fname = "WoWCombatLog_#{dt_s}_#{enc_name}_#{ev['groupSize']}man.txt"
+        # Open file, selecting extension by encoding.
+        ext = (out_encode) ? 'msg' : 'txt'
+        fname = "WoWCombatLog_#{dt_s}_#{enc_name}_#{ev['groupSize']}man.#{ext}"
         fpath = File.join(out_dir, fname)
-        out_fd = File.open(fpath, "w")
+        out_fd = File.open(fpath, (out_encode ? 'wb' : 'w'))
         print "Extracting #{fpath}... "
       end
 
+      # Count up.
       ev_count += 1 unless ev_count.nil?
 
+      unless out_fd.nil?
+        if out_encode
+          out_fd.write(ev.to_msgpack)
+        else
+          out_fd.write(line)
+        end
+      end
 
+      # Closing combat file with ENCOUNTER_END event.
       if ev['event'] == 'ENCOUNTER_END'
         unless ev_count.nil?
           duration = ev['timestamp'] - base_ts
@@ -80,6 +90,7 @@ argv.each do |log_file|
           puts "done (no ENCOUNTER_START event)"
         end
 
+        # Reset counter and file parameters.
         ev_count = nil
         base_ts = nil
         out_fd.close
