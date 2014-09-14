@@ -1,0 +1,12 @@
+2014-09-14 Masayoshi Mizutani <muret@haeena.net>
+	* v0.2.0 Release
+	* wl_extract_encount: Changed output message format
+	* wl_extract_encount: Added "-o" option to specify output directory
+	* wl_extract_encount: Added "-m" option to output as Msgpack encode
+	* wowlog.rb: Fixed to parse a log line that has double quatation
+
+2014-07-26 Masayoshi Mizutani <muret@haeena.net>
+	* v0.1.2 Release
+
+2014-07-13 Masayoshi Mizutani <muret@haeena.net>
+	* v0.1.1 Release
