@@ -26,35 +26,65 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), *%w[.. lib])
 require 'wowlog'
 require 'pp'
+require 'time'
+require 'optparse'
 
+out_encode = false
+out_dir = './'
 psr = Wowlog::Parser.new
 
-File.open(ARGV[0], 'r') { |fd|
-  out_fd = nil
-  fname = nil
-  fd.each { |line|
-    ev = psr.parse_line(line)
+optpsr = OptionParser.new
+optpsr.on('-m', 'output as msgpack encode') { |v| out_encode = v }
+optpsr.on('-o VAL', 'output directory') { |val| out_dir = val }
+argv = optpsr.parse(ARGV)
 
-    if ev['event'] == 'ENCOUNTER_START'
-      enc_name = ev['encounterName'].gsub(/\s/, '_')
-      ts = ev['timestamp'].to_i
-      fname = "WowCombatLog_#{ts}_#{enc_name}_#{ev['groupSize']}man.txt"
-      out_fd = File.open(fname, "w")
-      puts "Open: #{fname}"
-    end
+argv.each do |log_file|
+  File.open(log_file, 'r') { |fd|
+    out_fd = nil
+    fname = nil
+    STDOUT.sync = true
+    ev_count = nil
+    base_ts = nil
 
-    if !(out_fd.nil?)
-      out_fd.write(line)
-    end
+    fd.each { |line|
+      if !(out_fd.nil?)
+        out_fd.write(line)
+      end
 
-    if ev['event'] == 'ENCOUNTER_END'
-      puts "Close: #{fname}"
-      out_fd.close
-      out_fd = nil
-    end
+      ev = psr.parse_line(line)
+
+      if ev['event'] == 'ENCOUNTER_START'
+        ev_count = 0
+        base_ts = ev['timestamp']
+
+        enc_name = ev['encounterName'].gsub(/\s/, '_')
+        dt = Time.at(ev['timestamp']).to_s.split(/\s/)
+        dt_s = [dt[0].split('-').join(''), dt[1].split(':').join('')].join('_')
+
+        fname = "WoWCombatLog_#{dt_s}_#{enc_name}_#{ev['groupSize']}man.txt"
+        fpath = File.join(out_dir, fname)
+        out_fd = File.open(fpath, "w")
+        print "Extracting #{fpath}... "
+      end
+
+      ev_count += 1 unless ev_count.nil?
+
+
+      if ev['event'] == 'ENCOUNTER_END'
+        unless ev_count.nil?
+          duration = ev['timestamp'] - base_ts
+          puts "done (%d events, %d seconds)" % [ev_count, duration]
+        else
+          puts "done (no ENCOUNTER_START event)"
+        end
+
+        ev_count = nil
+        base_ts = nil
+        out_fd.close
+        out_fd = nil
+      end
+    }
   }
-}
-
+end

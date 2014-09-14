@@ -468,6 +468,7 @@ module Wowlog
 
       # rebuild CSV part
       csv_txt = terms[2..-1].join(' ')
+      csv_txt.gsub!('\\"', '""')
       cols = CSV.parse(csv_txt)[0]
 
       # parse CSV part
