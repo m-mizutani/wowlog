@@ -215,7 +215,17 @@ module Wowlog
   class HealParser < ColumnParser
     def parse(cols, obj)
       cols, obj = super(cols, obj)
-      cols.shift(8) # shift 8 columns because unknown parameters
+
+      # Advanced log parameters.
+      obj['unitGUID'] = cols[0]
+      obj['health'] = int(cols[1])
+      obj['attackPower'] = int(cols[2])
+      obj['spellPower'] = int(cols[3])
+      obj['powerType'] = resolv_power_type(cols[4])
+      obj['power'] = int(cols[5])
+      obj['coordX'] = cols[6].to_f
+      obj['coordY'] = cols[7].to_f
+      cols.shift(8)
 
       obj['amount'] = int(cols[0])
       obj['overhealing'] = int(cols[1])
@@ -454,7 +464,7 @@ module Wowlog
       end
 
       return obj
-    end
+p    end
 
     def parse_line(line)
       terms = line.split(' ')
